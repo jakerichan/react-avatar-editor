@@ -110,7 +110,8 @@
             imageState.resource = image;
             imageState.x = this.props.border;
             imageState.y = this.props.border;
-            this.setState({drag: false, image: imageState});
+            if (this.props.initialPosition) this.setPosition(this.props.initialPosition, imageState);
+            else this.setState({drag: false, image: imageState});
         },
 
         getInitialSize: function (width, height) {
@@ -177,6 +178,30 @@
                 height: height,
                 width: width
             }
+        },
+
+        setPosition: function (position, imageState) {
+            var image = imageState.resource || this.state.image.resource;
+            var dimensions = this.getDimensions();
+            var diff = image.width > image.height ? (position.x2 - position.x1) : (position.y2 - position.y1);
+            if (!image || !diff) return this.setState({image: imageState});
+            
+            var scale = dimensions.width / diff;
+            var imageWidth = image.naturalWidth * scale;
+            var imageHeight = image.naturalHeight * scale;
+            var zoom = image.naturalWidth > image.naturalHeight ? imageHeight / dimensions.height : imageWidth / dimensions.width;
+            
+            imageState.x = -position.x1 * scale;
+            imageState.y = -position.y1 * scale;
+            this.props.scale = zoom;
+            
+            if (this.props.onScaleChange) this.props.onScaleChange(zoom);
+            
+            this.setState({
+              drag: false,
+              lastScale: zoom,
+              image: imageState
+            });
         },
 
         getCroppingArea: function () {
